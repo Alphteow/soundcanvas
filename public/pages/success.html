@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Success</title>
+</head>
+<body>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('session_id');
+
+            if (sessionId) {
+                fetch(`/verify-payment?session_id=${sessionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.paymentStatus === 'paid') {
+                        console.log('HD Image URL:', data.hdImageUrl);
+
+                        // Fetch the image as a Blob
+                        fetch(data.hdImageUrl)
+                        .then(response => response.blob())
+                        .then(blob => {
+                            // Create a temporary URL for the Blob
+                            const url = URL.createObjectURL(blob);
+
+                            // Trigger the download of the original image
+                            const downloadLink = document.createElement('a');
+                            downloadLink.href = url;
+                            downloadLink.download = 'HD_Generated_Image.png'; // Change the file extension to .png or .jpg
+                            downloadLink.style.display = 'none';
+                            document.body.appendChild(downloadLink);
+                            downloadLink.click();
+                            document.body.removeChild(downloadLink);
+
+                            // Revoke the temporary URL
+                            URL.revokeObjectURL(url);
+
+                            // Redirect back to the index.html page with a success parameter
+                            window.location.href = '/?payment_success=true';
+                        });
+                    } else {
+                        alert('Payment verification failed. Please contact support.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error verifying payment:', error);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
